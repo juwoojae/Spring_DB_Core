@@ -6,7 +6,9 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 class MemberRepositoryV0Test {
@@ -16,7 +18,7 @@ class MemberRepositoryV0Test {
     @Test
     void crud() throws SQLException{
         //save
-        Member member = new Member("memberV4", 10000);
+        Member member = new Member("member100", 10000);
         repository.save(member);
 
         //findById
@@ -24,7 +26,18 @@ class MemberRepositoryV0Test {
         log.info("findMember={}", findMember);
         log.info("member == findMember {}", member == findMember); //참조를 같은것을해야 true 를 반환한다.
         log.info("member equals findMember {}", member.equals(findMember)); //equals() 를 @Data lombok 에서 오버라이딩해서 선언해둠. 속성 끼리 비교해서, 모두 참이라면 true 를 반환한다
-        Assertions.assertThat(findMember).isEqualTo(member);
+        assertThat(findMember).isEqualTo(member);
+
+        //update: money: 10000 -> 20000
+        repository.update(member.getMemberId(),20000);
+        Member updateMember = repository.findById(member.getMemberId());
+        assertThat(updateMember.getMoney()).isEqualTo(20000);
+
+        //delete
+        repository.delete(member.getMemberId());
+        assertThatThrownBy(() -> repository.findById(member.getMemberId()))
+                .isInstanceOf(NoSuchElementException.class);
+
     }
 
 }

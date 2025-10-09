@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
 /**
  * PreparedStatement 는 Statement 의 자식 타입인데 ? 를 통한 파라메터 바인딩을 가능하게 해준다.
  * SQL injection 공격에 대바할수 있다
- *
+ * <p>
  * ResultSet
  * select 쿼리가 순서대로 들어간다
  * 내부의 cursot 를 이동해서 다음 데이터를 조회할수 있다.
@@ -41,32 +41,74 @@ public class MemberRepositoryV0 {
         }
     }
 
-    public Member findById(String memberId) throws SQLException{
+    public Member findById(String memberId) throws SQLException {
         String sql = "select * from member where member_id = ?";
 
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
 
-        try{
+        try {
             con = getConnection();
             pstmt = con.prepareStatement(sql);
-            pstmt.setString(1,memberId); //해당 데이터베이스의 쿼리문의 ? 에 바인딩하기
+            pstmt.setString(1, memberId); //해당 데이터베이스의 쿼리문의 ? 에 바인딩하기
 
             rs = pstmt.executeQuery(); //데이터를 변경할때는 executeUpdate() 를 사용하지만, 조회할때는 executeQurey() 를 사용한다
-            if(rs.next()){ //resultSet 에서 찾은 Member 를 가지고 오는 과정 (커서가 존재해서 , 하나 다음칸으로 진행해야한다)
+            if (rs.next()) { //resultSet 에서 찾은 Member 를 가지고 오는 과정 (커서가 존재해서 , 하나 다음칸으로 진행해야한다)
                 Member member = new Member();
                 member.setMemberId(rs.getString("member_id"));
                 member.setMoney(rs.getInt("money"));
                 return member;
-            }else{
+            } else {
                 throw new NoSuchElementException("member not found memberId=" + memberId);
             }
-        }catch (SQLException e){
+        } catch (SQLException e) {
             log.info("db error", e);
             throw e;
         }
     }
+
+    public void update(String memberId, int money) throws SQLException {
+        String sql = "update member set money=? where member_id=?";  //개별행을 where 로 찾은 후 set 으로 갱신하기
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setInt(1, money);
+            pstmt.setString(2, memberId);
+            int resultSize = pstmt.executeUpdate(); //쿼리를 실행하고 영향받은 row 수를 반환한다
+            log.info("resultSize={}", resultSize);
+        } catch (SQLException e) {
+            log.info("db error", e);
+            throw e;
+        } finally {
+            close(con, pstmt, null);
+        }
+    }
+
+    public void delete(String memberId) throws SQLException {
+        String sql = "delete from member where member_id=?";
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try{
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, memberId);
+
+            pstmt.executeUpdate();
+    }catch (SQLException e){
+            log.error("db error", e);
+            throw e;
+        } finally {
+            close(con, pstmt, null);
+        }
+    }
+
     /**
      * 리소스 정리 메서드
      * 리소스를 정리할때에는 항상 역순으로 적용해주어야 한다
