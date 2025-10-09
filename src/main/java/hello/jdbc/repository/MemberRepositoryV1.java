@@ -1,24 +1,29 @@
 package hello.jdbc.repository;
 
-import hello.jdbc.connection.DBConnectionUtil;
 import hello.jdbc.domain.Member;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.support.JdbcUtils;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.NoSuchElementException;
-
 /**
- * PreparedStatement 는 Statement 의 자식 타입인데 ? 를 통한 파라메터 바인딩을 가능하게 해준다.
- * SQL injection 공격에 대바할수 있다
- * <p>
- * ResultSet
- * select 쿼리가 순서대로 들어간다
- * 내부의 cursot 를 이동해서 다음 데이터를 조회할수 있다.
- * rs.next() 이것을 호출하면 커서가 다음으로 이동한다. (최초의 커서는 데이터를 가지고 있지 않음 . 최초로 한번 호출해야한다)
- * rs.getString("member_id) 현재 커서가 가리키고 있는 row 의 member_id 를 반환한다.
+ * JDBC - DataSource 사용, JdbcUtils 사용
+ * DataSource 의존관계 주입(생성자 주입)
+ * DataSource 는 표준 인터페이스이다
+ * 커넥션을 얻는 법은 여러가지다,DriverManager 를 사용해서 항상 새로운 커넥션을 만들어서 얻는방법, 커넥션 풀을 사용하는 방법(히카리cp)
+ * 이것을 얻는 getConnection 메서드를 가지는 표준 인터페이스를 Datasource 라고 한다 (커넥션을 획득하는 방법을 추상화)
+ * JdbcUtils 편의 메서드를
+ * 제공해서 커넥션을 편리하게 Close() 리소스 반환을 할수 있다.
  */
 @Slf4j
-public class MemberRepositoryV0 {
+public class MemberRepositoryV1 {
+
+    private final DataSource dataSource;
+
+    public MemberRepositoryV1(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     public Member save(Member member) throws SQLException {
         String sql = "insert into member(member_id, money) values (?,?)";
@@ -65,9 +70,9 @@ public class MemberRepositoryV0 {
         } catch (SQLException e) {
             log.info("db error", e);
             throw e;
-        } finally {
-            close(con, pstmt, null);
-        }
+        }  finally {
+        close(con, pstmt, null);
+    }
     }
 
     public void update(String memberId, int money) throws SQLException {
@@ -116,30 +121,15 @@ public class MemberRepositoryV0 {
      * 리소스를 정리할때에는 항상 역순으로 적용해주어야 한다
      */
     private void close(Connection con, Statement stmt, ResultSet rs) {
-        if (rs != null) {
-            try {
-                rs.close(); //Exception 발생 가능
-            } catch (SQLException e) {
-                log.info("error", e);
-            }
-        }
-        if (stmt != null) {
-            try {
-                stmt.close(); //Exception 발생 가능
-            } catch (SQLException e) {
-                log.info("error", e);
-            }
-        }
-        if (con != null) {
-            try {
-                con.close(); //Exception 발생 가능
-            } catch (SQLException e) {
-                log.info("error", e);
-            }
-        }
+        JdbcUtils.closeResultSet(rs);
+        JdbcUtils.closeStatement(stmt);
+        JdbcUtils.closeConnection(con);
+
     }
 
     private Connection getConnection() throws SQLException {
-        return DBConnectionUtil.getConnection();
+        Connection con = dataSource.getConnection();
+        log.info("get connection={}, class={}", con, con.getClass());
+        return con;
     }
 }
