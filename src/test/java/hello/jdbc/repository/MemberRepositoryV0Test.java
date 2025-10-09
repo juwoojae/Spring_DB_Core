@@ -21,6 +21,7 @@ class MemberRepositoryV0Test {
         Member member = new Member("member100", 10000);
         repository.save(member);
 
+
         //findById
         Member findMember = repository.findById(member.getMemberId());
         log.info("findMember={}", findMember);
