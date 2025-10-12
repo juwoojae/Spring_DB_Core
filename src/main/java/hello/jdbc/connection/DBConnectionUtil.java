@@ -2,7 +2,6 @@ package hello.jdbc.connection;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.URLConnection;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

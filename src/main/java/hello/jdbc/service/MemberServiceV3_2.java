@@ -4,33 +4,42 @@ import hello.jdbc.domain.Member;
 import hello.jdbc.repository.MemberRepositoryV3;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.pulsar.PulsarProperties;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.sql.SQLException;
 
 /**
- * 트랜잭션 - 파라미터 연동, 풀을 고려한 종료
+ * 트랜잭션 - 트랜잭션 템플릿
  */
 @Slf4j
-@RequiredArgsConstructor
-public class MemberServiceV3_1 {
-    //트랜잭션 매니저를 주입 받는다. 지금은 JDBC 기술을 사용하므로 DataSourceTransactionManager 를 주입 받아야 한다.
-    private final PlatformTransactionManager transactionManager;
+public class MemberServiceV3_2 {
+    //private final PlatformTransactionManager transactionManager;
+    private final TransactionTemplate txTemplate;
     private final MemberRepositoryV3 memberRepository;
+    //관례적으로 PlatformTransactionManager 로 생성자 주입받는다
+    //PlatformTransactionManager 를 SpringBean 으로 등록해서 DI를 해줄수도 있지만, 관념적으로 이렇게 쓴다
+    public MemberServiceV3_2(PlatformTransactionManager transactionManager, MemberRepositoryV3 memberRepository) {
+        this.txTemplate = new TransactionTemplate(transactionManager);
+        this.memberRepository = memberRepository;
+    }
 
+    /**
+     * 트랜잭션 템플릿을 사용해서 트랜잭션을 시작하고, 커밋,롤백코드를 자동으로 처리해준다
+     * 비즈니스로직이 정상적으로 수행되면 커밋한다
+     * 언체크 예외가 발생하면 롤백한다(체크 예외는 커밋으로 처리한다, 그러므로 따로 catch 해서 런타임에러를 던저줘야한다)
+     */
     public void accountTransfer(String fromId, String toId, int money) throws SQLException {
-        //트랜잭션의 시작(Set autocommit false 시작 현재 트랜잭션 상태 정보가 포함되어 있다. 이후 트랜잭션을 커밋, 롤백할 때 필요하다.
-        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
-        try{
-            bizLogic(fromId, toId, money); //트랜잭션 을 관리하는 로직과 비즈니스 로직을 분리
-            transactionManager.commit(status);
-
-        } catch (Exception e) {
-            transactionManager.rollback(status);
-            throw new IllegalStateException(e);
-        }
+        txTemplate.executeWithoutResult((status)->{
+            try{
+                bizLogic(fromId, toId, money);
+            } catch (SQLException e) {
+                throw new IllegalStateException(e);
+            }
+        });
     }
 
 
