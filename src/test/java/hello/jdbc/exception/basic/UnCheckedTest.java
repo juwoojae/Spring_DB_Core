@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
  * 언체크 예외: 예외를 잡아서 처리하지 않아도 throws 를 생략할수 있다.
  */
 @Slf4j
-public class UncheckedTest {
+public class UnCheckedTest {
 
     @Test
     void unchecked_catch(){
