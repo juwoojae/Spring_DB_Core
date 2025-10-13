@@ -5,8 +5,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.*;
+
 @Slf4j
 public class CheckedTest {
+
+    /**
+     * 예외가 제공하는 여러가지 기본 기능, 오류메세지를 보관하는 기능
+     */
+    static class MyCheckedException extends Exception{ //Exception 을 상속 받으면 체크 예외가 된다
+        public MyCheckedException(String message){
+            super(message);
+        }
+    }
 
     @Test
     void checked_catch(){
@@ -17,8 +28,9 @@ public class CheckedTest {
     @Test
     void checked_throw(){
         Service service = new Service();
-        Assertions.assertThatThrownBy(() -> service.callThrow())
+        assertThatThrownBy(() -> service.callThrow())
                 .isInstanceOf(MyCheckedException.class);
+
     }
     /**
      * Checked 예외는
@@ -51,15 +63,6 @@ public class CheckedTest {
     static class Repository{
         public void call() throws MyCheckedException {
             throw new MyCheckedException("ex");
-        }
-    }
-
-    /**
-     * 예외가 제공하는 여러가지 기본 기능, 오류메세지를 보관하는 기능
-     */
-    static class MyCheckedException extends Exception{ //Exception 을 상속 받으면 체크 예외가 된다
-        public MyCheckedException(String message){
-            super(message);
         }
     }
 
