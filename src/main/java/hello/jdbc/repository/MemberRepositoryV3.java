@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
 public class MemberRepositoryV3 {
 
     private final DataSource dataSource;
-
+    //생성자 주입
     public MemberRepositoryV3(DataSource dataSource) {
         this.dataSource = dataSource;
     }
