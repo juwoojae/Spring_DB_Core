@@ -9,10 +9,16 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.NoSuchElementException;
 
+/**
+ * 트랜잭션 - 트랜잭션 메니저(트랜잭션 동기화로 최적화)
+ * DataSourceUtils.getConnection()
+ * DataSourceUtils.releaseConnection()
+ */
 @Slf4j
 public class MemberRepositoryV3 {
 
     private final DataSource dataSource;
+
     //생성자 주입
     public MemberRepositoryV3(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -46,13 +52,10 @@ public class MemberRepositoryV3 {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con
-                    = getConnection();
-            pstmt
-                    = con.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, memberId);
-            rs
-                    = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 Member member = new Member();
                 member.setMemberId(rs.getString("member_id"));
