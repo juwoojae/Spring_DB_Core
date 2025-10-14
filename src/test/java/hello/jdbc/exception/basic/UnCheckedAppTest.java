@@ -6,6 +6,10 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 
+/**
+ * 체크예외 -> 언체크예외(런타임 exception) 으로 전환을 해줄때에는
+ * 꼭 !!  예외를 포함시켜 주어야 한다!!
+ */
 @Slf4j
 public class UnCheckedAppTest {
 
@@ -21,7 +25,8 @@ public class UnCheckedAppTest {
         try{
             controller.request();
         } catch (Exception e) {
-            log.info("ex",e);
+          //  e.printStackTrace();
+            log.info("ex",e); //로그를 출력할때, 마지막 파라메터에 예외를 넣어주면 로그에 스택 트레이스를 출력할수 있다.
         }
     }
 
@@ -71,7 +76,7 @@ public class UnCheckedAppTest {
 
     static class RuntimeSQLException extends RuntimeException{
         public RuntimeSQLException() {
-        }
+        } //CausedBy 가 안나온다 . 뭐때문에 발생했는지 모른다
 
         public RuntimeSQLException(Throwable cause) {
             super(cause);
